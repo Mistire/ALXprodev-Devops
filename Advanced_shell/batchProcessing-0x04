@@ -7,16 +7,14 @@ mkdir -p "$DIR"
 
 echo "Starting parallel fetch..."
 
-pids=()   # store background process IDs
+pids=()
 
 for p in "${POKEMONS[@]}"; do
     echo "Fetching $p in background..."
 
     (
-        # Background subshell starts here
         curl -s -o "$DIR/$p.json" "https://pokeapi.co/api/v2/pokemon/$p"
 
-        # Validate fetch
         if [ $? -eq 0 ] && [ -s "$DIR/$p.json" ]; then
             echo "$p fetched successfully."
         else
@@ -24,13 +22,28 @@ for p in "${POKEMONS[@]}"; do
         fi
     ) &
 
-    # Save PID
     pids+=($!)
 done
 
-# Wait for all background jobs to finish
+# Timeout protection: if any process hangs more than 10 seconds, kill it
+TIMEOUT=10
+START=$(date +%s)
+
+echo "Waiting for processes..."
+
 for pid in "${pids[@]}"; do
-    wait "$pid"
+    while kill -0 "$pid" 2>/dev/null; do
+        NOW=$(date +%s)
+        ELAPSED=$((NOW - START))
+
+        if [ $ELAPSED -gt $TIMEOUT ]; then
+            echo "Process $pid exceeded timeout. Killing..."
+            kill -9 "$pid"
+            echo "Killed PID $pid due to timeout" >> errors_parallel.txt
+            break
+        fi
+        sleep 0.5
+    done
 done
 
 echo "All parallel fetches completed."
