@@ -7,15 +7,15 @@ WEIGHT=$(jq -r '.weight' data.json)
 TYPE=$(jq -r '.types[0].type.name' data.json)
 
 
-HEIGHT_M=$(awk "BEGIN { printf \"%.1f\", $HEIGHT / 10 }")
+formatted_height=$(awk "BEGIN { printf \"%.1f\", $HEIGHT / 10 }")
 
 
-WEIGHT_KG=$(awk "BEGIN { printf \"%.0f\", $WEIGHT / 10 }")
+formatted_weight=$(awk "BEGIN { printf \"%.0f\", $WEIGHT / 10 }")
 
 
-TYPE_CAP=$(echo "$TYPE" | sed 's/.*/\u&/')
+type=$(echo "$TYPE" | sed 's/.*/\u&/')
 
 
-NAME_CAP=$(echo "$NAME" | sed 's/.*/\u&/')
+name=$(echo "$NAME" | sed 's/.*/\u&/')
 
-echo "$NAME_CAP is of type $TYPE_CAP, weighs ${WEIGHT_KG}kg, and is ${HEIGHT_M}m tall."
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
