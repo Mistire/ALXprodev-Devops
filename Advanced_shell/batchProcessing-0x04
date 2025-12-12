@@ -1,0 +1,36 @@
+#!/bin/bash
+
+POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+DIR="pokemon_data_parallel"
+
+mkdir -p "$DIR"
+
+echo "Starting parallel fetch..."
+
+pids=()   # store background process IDs
+
+for p in "${POKEMONS[@]}"; do
+    echo "Fetching $p in background..."
+
+    (
+        # Background subshell starts here
+        curl -s -o "$DIR/$p.json" "https://pokeapi.co/api/v2/pokemon/$p"
+
+        # Validate fetch
+        if [ $? -eq 0 ] && [ -s "$DIR/$p.json" ]; then
+            echo "$p fetched successfully."
+        else
+            echo "Failed to fetch $p" >> errors_parallel.txt
+        fi
+    ) &
+
+    # Save PID
+    pids+=($!)
+done
+
+# Wait for all background jobs to finish
+for pid in "${pids[@]}"; do
+    wait "$pid"
+done
+
+echo "All parallel fetches completed."
