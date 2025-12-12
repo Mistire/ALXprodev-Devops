@@ -3,20 +3,35 @@
 POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 DIR="pokemon_data"
 
-
 mkdir -p "$DIR"
 
 for p in "${POKEMONS[@]}"; do
     echo "Fetching data for $p..."
 
+    ATTEMPTS=0
+    SUCCESS=0
 
-    curl -s "https://pokeapi.co/api/v2/pokemon/$p" -o "$DIR/$p.json"
+    # Retry loop, max 3 attempts
+    while [ $ATTEMPTS -lt 3 ]; do
+        ATTEMPTS=$((ATTEMPTS + 1))
 
+        curl -s -o "$DIR/$p.json" "https://pokeapi.co/api/v2/pokemon/$p"
 
-    if [ $? -eq 0 ] && [ -s "$DIR/$p.json" ]; then
-        echo "Saved data to $DIR/$p.json "
+        # Validate response: file exists AND not empty
+        if [ $? -eq 0 ] && [ -s "$DIR/$p.json" ]; then
+            SUCCESS=1
+            break
+        else
+            echo "Attempt $ATTEMPTS for $p failed. Retrying..."
+            sleep 1
+        fi
+    done
+
+    if [ $SUCCESS -eq 1 ]; then
+        echo "Saved data to $DIR/$p.json ✅"
     else
-        echo "Failed to fetch $p" >> errors.txt
+        echo "Failed to fetch $p after 3 attempts" >> errors.txt
+        echo "Skipping $p..."
     fi
 
     sleep 1
