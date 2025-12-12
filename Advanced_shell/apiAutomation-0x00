@@ -1,0 +1,14 @@
+#!/bin/bash
+
+URL="https://pokeapi.co/api/v2/pokemon/pikachu"
+
+# Make the request and save output
+curl -s -w "%{http_code}" "$URL" -o data.json > status.tmp
+
+STATUS=$(cat status.tmp)
+rm status.tmp
+
+# Check the status code
+if [ "$STATUS" -ne 200 ]; then
+    echo "Request failed with status code $STATUS" >> errors.txt
+fi
